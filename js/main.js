@@ -1,8 +1,8 @@
 // El código va aquí -> 
-let txtName = document.getElementById("Name");
+let txtNombre = document.getElementById("Name");
 let txtNumber = document.getElementById("Number");
 
-let btnAdd = document.getElementById("btnAgregar");
+let btnAgregar = document.getElementById("btnAgregar");
 let btnClear = document.getElementById("btnClear");
 
 let alertValidaciones = document.getElementById("alertValidaciones");
@@ -15,17 +15,20 @@ let contadorProductos = document.getElementById("contadorProductos");
 let productosTotal = document.getElementById("productosTotal");
 let precioTotal = document.getElementById("precioTotal");
 
-let isValid = true;
 let idTimeout;
 let precio = 0;
 let contador = 0;
+let isValid = true;
 let totalEnProductos = 0;
 let costoTotal = 0;
 
+let datos = []; //para almacenar los datos de la tabla
+
+//Limpiar campos
 btnClear.addEventListener("click", function (event) {
   event.preventDefault();
-  txtName.value = " "; /* Para borrar lo de dentro del campo*/
-  txtNumber.value = " ";
+  txtNombre.value = "";
+  txtNumber.value = "";
   cuerpoTabla[0].innerHTML = "";
 
   contador = 0;
@@ -38,7 +41,7 @@ btnClear.addEventListener("click", function (event) {
   localStorage.setItem("contadorProductos", contador);
   localStorage.setItem("totalEnProductos", totalEnProductos);
   localStorage.setItem("costoTotal", costoTotal.toFixed(2));
-}); //Botón borrar
+}); //click btn clear
 
 function validarCantidad() {
   if (txtNumber.value.length == 0) {
@@ -51,91 +54,133 @@ function validarCantidad() {
     return false;
   }
   return true;
-} /*Validar Cantidad*/
+} //validarCantidad
 
 function getPrecio() {
   return Math.floor(Math.random() * 50 * 100) / 100;
 }
 
-btnAdd.addEventListener("click", function (event) {
+btnAgregar.addEventListener("click", function (event) {
   event.preventDefault();
   isValid = true;
+  console.log(getPrecio());
   clearTimeout(idTimeout);
   alertValidacionesTexto.innerHTML = "";
   alertValidaciones.style.display = "none";
-  let lista = "Los siguientes campos deben ser llenados correctamente: <ul>";
-  //   txtName.value = txtName.value.trim(); nos permite borrar los espacios pero dentro de la función
-  if (txtName.value.length < 2) {
-    txtName.style.border = "solid thin red";
-    lista += "<li>Se debe escribir un nombre válido </i>";
-    // alertValidacionesTexto.innerHTML =
-    //   "Se debe escribir un nombre válido. ";
+  let lista = "Los siguiente campos deben ser llenados correctamente: <ul>";
+  //console.log("borde:", txtNombre.style.border);//sirve para saber las características de estilo
+  //txtNombre.value=txt-txtNombre.value.trim();
+
+  if (txtNombre.value.length < 2) {
+    txtNombre.style.border = "solid thin red";
+    lista += "<li> Se debe escribir un nombre válido.</li>";
+    //alertValidacionesTexto.innerHTML="Se de escribir un nombre válido";
     alertValidaciones.style.display = "block";
     isValid = false;
   } else {
-    txtName.style.border = "";
-  }
+    txtNombre.style.border = "";
+  } // if nombre
+
   if (!validarCantidad()) {
     txtNumber.style.border = "solid thin red";
-    lista += "<li>Se debe escribir una cantidad válida </i>";
-    // alertValidacionesTexto.innerHTML = "Se debe escribir un número válido.";
+    lista += "<li> Se debe escribir una cantidad válida.</li>";
+    //alertValidacionesTexto.innerHTML+="Se de escribir una cantidad válida";
     alertValidaciones.style.display = "block";
     isValid = false;
   } else {
     txtNumber.style.border = "";
-  }
+  } //if numero
   lista += "</ul>";
   alertValidacionesTexto.insertAdjacentHTML("beforeend", lista);
   idTimeout = setTimeout(function () {
-    //Función que a cierto tiempo desaparece em este caso el recuadro AlertValidaciones
     alertValidaciones.style.display = "none";
-  }, 5000);
+  }, 3000);
+
   if (isValid) {
-    precio = getPrecio(); //Obtener precio
+    precio = getPrecio();
     contador++;
     let row = `<tr>
-                <th>${contador}</td>
-                <td>${txtName.value}</td>
-                <td>${txtNumber.value}</td>
-                <td>${precio}</td>
+            <th>${contador}</th>
+            <td>${txtNombre.value}</td>
+            <td>${txtNumber.value}</td>
+            <td>${precio}</td>
             </tr>`;
+
+    let elemento = `{
+                "id": ${contador},
+                "nombre": "${txtNombre.value}",
+                "cantidad": "${txtNumber.value}",
+                "precio": "${precio}"
+    }`;
+    datos.push(JSON.parse(elemento));
+    localStorage.setItem("datos", JSON.stringify(datos));
+
     cuerpoTabla[0].insertAdjacentHTML("beforeend", row);
     contadorProductos.innerText = contador;
     totalEnProductos += parseFloat(txtNumber.value);
     productosTotal.innerText = totalEnProductos;
     costoTotal += precio * parseFloat(txtNumber.value);
     precioTotal.innerText = `$ ${costoTotal.toFixed(2)}`;
-    localStorage.setItem("contadorProductos", contador);
-    localStorage.setItem("totalEnProductos", totalEnProductos);
-    localStorage.setItem("costoTotal", costoTotal.toFixed(2));
-    txtName.value = "";
+    let resumen = `{"contadorProductos": ${contador},
+                  "totalEnProductos" : ${totalEnProductos},
+                "costoTotal" : ${costoTotal.toFixed(2)}}`;
+    localStorage.setItem("resumen", resumen);
+
+    //localStorage.setItem("contadorProductos", contador);
+    //localStorage.setItem("totalEnProductos", totalEnProductos);
+    //localStorage.setItem("costoTotal", costoTotal.toFixed(2));
+    txtNombre.value = "";
     txtNumber.value = "";
-    txtName.focus();
-  }
-}); // Botón agregar click
+    txtNombre.focus();
+  } //if isValid
+}); //btnAgregar.click
+
+txtNombre.addEventListener("blur", function (event) {
+  event.preventDefault();
+  txtNombre.value = txtNombre.value.trim();
+}); //txtNombre.blur
 
 txtNumber.addEventListener("blur", function (event) {
   event.preventDefault();
   txtNumber.value = txtNumber.value.trim();
-}); //txtnumber. blur
-txtName.addEventListener("blur", function (event) {
-  event.preventDefault();
-  txtName.value = txtName.value.trim();
-});
+}); //txtNumber.blur
 
 window.addEventListener("load", function (event) {
-  if (localStorage.getItem("contadorProductos") == null) {
-    localStorage.setItem("contadorProductos", "0");
-  }
-  if (localStorage.getItem("totalEnProductos") == null) {
-    localStorage.setItem("totalEnProductos", "0");
-  }
-  if (localStorage.getItem("costoTotal") == null) {
-    localStorage.setItem("costoTotal", "0.0");
-  }
-  contador = parseInt(localStorage.getItem("contadorProductos"));
-  totalEnProductos = parseInt(localStorage.getItem("totalEnProductos"));
-  costoTotal = parseFloat(localStorage.getItem("costoTotal"));
+  if (localStorage.getItem("resumen") == null) {
+    let resumen = `{"contadorProductos": ${contador},
+    "totalEnProductos" : ${totalEnProductos},
+    "costoTotal" : ${costoTotal.toFixed(2)}}`;
+    this.localStorage.setItem("resumen", resumen);
+  } //if json
+  let res = JSON.parse(localStorage.getItem("resumen"));
+  if (localStorage.getItem("datos") != null) {
+    datos = JSON.parse(localStorage.getItem("datos"));
+
+    datos.forEach((r) => {
+      let row = `<tr>
+            <th>${r.id}</th>
+            <td>${r.nombre}</td>
+            <td>${r.cantidad}</td>
+            <td>$ ${r.precio}</td>
+            </tr>`;
+      cuerpoTabla[0].insertAdjacentHTML("beforeend", row);
+    });
+  } // != null
+  // if (this.localStorage.getItem("contadorProductos")==null){
+  //     this.localStorage.setItem("contadorProductos", "0");
+  // }
+
+  // if (this.localStorage.getItem("totalEnProductos")==null){
+  //     this.localStorage.setItem("totalEnProductos", "0");
+  // }
+
+  // if (this.localStorage.getItem("costoTotal")==null){
+  //     this.localStorage.setItem("costoTotal", "0.0");
+  // }
+
+  contador = res.contadorProductos; //contador = parseInt(localStorage.getItem("contadorProductos"));
+  totalEnProductos = res.totalEnProductos; //totalEnProductos = parseInt(localStorage.getItem("totalEnProductos"));
+  costoTotal = res.costoTotal; //costoTotal = parseFloat(localStorage.getItem("costoTotal"));
 
   contadorProductos.innerText = contador;
   productosTotal.innerText = totalEnProductos;
